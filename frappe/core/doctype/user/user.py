@@ -12,6 +12,7 @@ from frappe.utils.user import get_system_managers
 import frappe.permissions
 import frappe.share
 import re
+import json
 from frappe.limits import get_limits
 from frappe.website.utils import is_signup_enabled
 from frappe.utils.background_jobs import enqueue
@@ -1075,3 +1076,17 @@ def generate_keys(user):
 
 		return {"api_secret": api_secret}
 	frappe.throw(frappe._("Not Permitted"), frappe.PermissionError)
+
+@frappe.whitelist()
+def get_role_base_user_for_mention(valid_users):
+	print(valid_users, "pop")
+	valid_users = json.loads(valid_users)
+	for user in valid_users:
+		roles = [r[0] for r in frappe.db.sql("""select hr.role from `tabHas Role` as hr
+						join `tabRole` ro
+						ON hr.role = ro.name
+						where hr.parent=%s and hr.role not in ('All', 'Guest') and ro.allowed_in_mention = 1""", (user,), debug=1)]
+		print(user, roles, "popoooooo")				
+		if roles == []:
+			valid_users.remove(user)
+	return valid_users

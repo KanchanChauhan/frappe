@@ -730,8 +730,19 @@ frappe.ui.form.Timeline = class Timeline {
 	get_names_for_mentions() {
 		var valid_users = Object.keys(frappe.boot.user_info)
 			.filter(user => !["Administrator", "Guest"].includes(user));
-
-		return valid_users.map(user => frappe.boot.user_info[user].name);
+		console.log(valid_users, "valid_users")
+		return frappe.call({
+			method: 'frappe.core.doctype.user.user.get_role_base_user_for_mention',
+			args: { 
+				valid_users: valid_users 
+			},
+			callback: function(r) {
+				if(!r.exc) {
+					console.log(r.message, "valid_users")
+					r.message.map(user => frappe.boot.user_info[user].name);
+				}
+			}
+		});
 	}
 
 	setup_comment_like() {
